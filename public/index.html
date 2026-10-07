@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Rate Limiter Lab — replay one request stream through fixed, sliding and log windows; compare token vs leaky bucket output; exhaust a concurrency cap with held connections; watch two nodes silently double a quota.">
+  <title>Rate Limiter Lab — ten names, four mechanisms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400..800&display=swap">
+  <link rel="stylesheet" href="/styles.css">
+<!-- pb-shell --><link rel="stylesheet" href="./pb-shell.css"><!-- pb-shell --><!-- pb-back --><link rel="stylesheet" href="./pb-back.css"><!-- pb-back --></head>
+<body>
+<a class="skip-link" href="#main">Skip to main content</a>
+<main id="main">
+  <nav aria-label="Primary"><a aria-current="page" href="/">Lab</a><a href="/guide.html">Guide</a><a href="https://github.com/anhquanbd2021/10-rate-limiting-algorithms-every-backend">Source</a></nav>
+  <header class="hero">
+    <div class="hero-copy"><p class="eyebrow">Rate Limiter Lab · deterministic clock</p><h1>Ten names on the listicle. Four actual mechanisms.</h1><p class="lede">Fire the same request stream at every algorithm and the differences stop being vocabulary: <strong>fixed window</strong> admits 2&times; the limit at a boundary, <strong>sliding</strong> variants pay memory for correctness, <strong>token bucket</strong> separates rate from burst, <strong>leaky bucket</strong> emits jitter-free output, and the <strong>concurrency limit</strong> catches the attack every per-second limiter misses.</p></div>
+    <p class="warning"><strong>Safe educational demo.</strong> Everything runs in your browser on an injected clock — no network calls, no Redis, no real traffic shaping. It's a model of the mechanics, not infrastructure.</p>
+  </header>
+
+  <section class="workspace" aria-label="Boundary lab">
+    <section class="panel controls" aria-labelledby="bd-title">
+      <div class="panel-head"><p class="eyebrow">Boundary lab</p><h2 id="bd-title">Fixed window admits 2&times; at the edge</h2></div>
+      <button id="bd-run" type="button">Run the edge-packed burst (limit 5 / 1s)</button>
+      <p class="muted">Ten requests packed against a window rollover — five just before <code>t=1000ms</code>, five just after. Fixed window sees two legal windows; the sliding variants see one rolling span with ten requests in it. Same stream, three verdicts.</p>
+    </section>
+    <section class="panel results-panel" aria-labelledby="bd-results-title">
+      <div class="section-heading"><div><p class="eyebrow">Verdicts</p><h2 id="bd-results-title">Admitted per algorithm</h2></div><span id="bd-badge" class="badge" role="status" aria-live="polite">Ready</span></div>
+      <ol id="bd-log" class="results compact" aria-label="Per-request verdicts" tabindex="0"></ol>
+      <ul class="stat-grid">
+        <li><span class="stat-num" id="bd-fixed">—</span><span class="stat-label">fixed window</span></li>
+        <li><span class="stat-num" id="bd-sliding">—</span><span class="stat-label">sliding counter</span></li>
+        <li><span class="stat-num" id="bd-log">—</span><span class="stat-label">sliding log</span></li>
+      </ul>
+    </section>
+  </section>
+
+  <section class="workspace" aria-label="Buckets lab">
+    <section class="panel controls" aria-labelledby="bk-title">
+      <div class="panel-head"><p class="eyebrow">Buckets lab</p><h2 id="bk-title">Token bursts. Leaky meters.</h2></div>
+      <button id="bk-run" type="button">Run the same 8-request burst (2/s, capacity 8)</button>
+      <p class="muted">Same input, same admit count — different output. The <strong>token bucket</strong> had capacity banked during the idle period, so the whole burst passes in 70ms. The <strong>leaky bucket</strong> accepts the same eight into its queue and emits at exactly 500ms intervals. Rate and burst are different dials; a constant drain is a different product.</p>
+    </section>
+    <section class="panel results-panel" aria-labelledby="bk-results-title">
+      <div class="section-heading"><div><p class="eyebrow">Output shape</p><h2 id="bk-results-title">Emission timelines</h2></div><span id="bk-badge" class="badge" role="status" aria-live="polite">Ready</span></div>
+      <div id="bk-chart" class="depth-chart" aria-label="Emission timeline chart"></div>
+      <ul class="stat-grid">
+        <li><span class="stat-num" id="bk-token-last">—</span><span class="stat-label">token: last emit (ms)</span></li>
+        <li><span class="stat-num" id="bk-leaky-last">—</span><span class="stat-label">leaky: last emit (ms)</span></li>
+        <li><span class="stat-num" id="bk-gap">—</span><span class="stat-label">leaky: every gap (ms)</span></li>
+      </ul>
+    </section>
+  </section>
+
+  <section class="workspace" aria-label="Concurrency lab">
+    <section class="panel controls" aria-labelledby="cc-title">
+      <div class="panel-head"><p class="eyebrow">Concurrency lab</p><h2 id="cc-title">The axis rate limiters can't see</h2></div>
+      <button id="cc-run" type="button">Six slow clients hold connections (limit 4)</button>
+      <p class="muted">Eleven requests over ~5 seconds — roughly 2/s. A generous fixed window of 10/s admits <em>all of them</em>. But six requests each hold their slot for five seconds, so the fourth-and-last in-flight slot is gone: four legitimate short requests are rejected while the rate limiter sees nothing wrong.</p>
+    </section>
+    <section class="panel results-panel" aria-labelledby="cc-results-title">
+      <div class="section-heading"><div><p class="eyebrow">Slots</p><h2 id="cc-results-title">In-flight, not per-second</h2></div><span id="cc-badge" class="badge" role="status" aria-live="polite">Ready</span></div>
+      <div id="cc-slots" class="depth-chart" aria-label="Concurrency slot occupancy"></div>
+      <ol id="cc-log" class="results compact" aria-label="Per-request verdicts" tabindex="0"></ol>
+    </section>
+  </section>
+
+  <section class="workspace" aria-label="Deployment and clients lab">
+    <section class="panel controls" aria-labelledby="dp-title">
+      <div class="panel-head"><p class="eyebrow">Deployment &amp; clients lab</p><h2 id="dp-title">Where the "algorithms" stop being algorithms</h2></div>
+      <div class="btn-row">
+        <button id="dp-drift" type="button">24 requests, 2 nodes, "limit 10"</button>
+        <button id="dp-quota" type="button" class="secondary">One hog, one victim</button>
+        <button id="dp-storm" type="button" class="secondary">8 clients 429'd — retry</button>
+      </div>
+      <p class="muted"><strong>Distributed counter:</strong> two nodes with local counters admit 2&times; the quota unless the counter is shared and atomic. <strong>Per-user quota:</strong> a policy — any mechanism keyed by identity — that stops a noisy neighbor. <strong>Backoff:</strong> client discipline — eight rejected clients retrying on the same 200ms tick vs exponential + jitter.</p>
+    </section>
+    <section class="panel results-panel" aria-labelledby="dp-results-title">
+      <div class="section-heading"><div><p class="eyebrow">Report</p><h2 id="dp-results-title">Drift, quota, storm</h2></div><span id="dp-badge" class="badge" role="status" aria-live="polite">Ready</span></div>
+      <ul class="stat-grid">
+        <li><span class="stat-num" id="dp-a">—</span><span class="stat-label" id="dp-a-label">run a scenario</span></li>
+        <li><span class="stat-num" id="dp-b">—</span><span class="stat-label" id="dp-b-label">—</span></li>
+        <li><span class="stat-num" id="dp-c">—</span><span class="stat-label" id="dp-c-label">—</span></li>
+      </ul>
+      <ol id="dp-log" class="results compact" aria-label="Scenario detail" tabindex="0"></ol>
+    </section>
+  </section>
+
+  <footer class="site-footer">
+    <p><a href="/guide.html">Read the mechanics guide</a> · <a href="https://github.com/anhquanbd2021/10-rate-limiting-algorithms-every-backend">Inspect source and tests</a></p>
+  </footer>
+</main>
+<script type="module" src="/app.js"></script>
+<!-- pb-shell --><a class="pb-shell" href="https://github.com/anhquanbd2021/10-rate-limiting-algorithms-every-backend" title="10-rate-limiting-algorithms-every-backend — an Article Playbook demo (view source)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="2" y="2" width="9" height="9" rx="2" fill="#2dd4bf"/><rect x="13" y="2" width="9" height="9" rx="2" fill="#2dd4bf" opacity=".45"/><rect x="2" y="13" width="9" height="9" rx="2" fill="#2dd4bf" opacity=".45"/><rect x="13" y="13" width="9" height="9" rx="4.5" fill="#2dd4bf"/></svg><b>10-rate-limiting-algorithms-every-backend</b><i>DEMO</i></a><!-- pb-shell --><!-- pb-back --><a class="pb-back" id="pb-back" href="https://github.com/anhquanbd2021/10-rate-limiting-algorithms-every-backend" title="Back to the article — 10-rate-limiting-algorithms-every-backend">← Article <i>PLAYBOOK</i></a><script>(function(){var a=document.getElementById('pb-back');if(!a)return;var h=location.hostname;if(/^(localhost|127\.0\.0\.1|192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.)/.test(h)){a.href='//'+h+':'+(/^(localhost|127\.0\.0\.1)$/.test(h)?'1234':'30082')+'/microsites/article.html?slug=10-rate-limiting-algorithms-every-backend';}})();</script><!-- pb-back --></body>
+</html>

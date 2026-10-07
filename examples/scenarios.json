@@ -1,0 +1,17 @@
+{
+  "twoNode": { "limit": 10, "requests": 24 },
+  "quota": {
+    "globalLimit": 10,
+    "perUserLimit": 5,
+    "hog": { "count": 10, "start": 0, "every": 10 },
+    "victim": { "count": 3, "start": 100, "every": 10 }
+  },
+  "retryStorm": {
+    "clients": 8,
+    "outageMs": 4000,
+    "fixedMs": 200,
+    "baseMs": 200,
+    "maxMs": 2000,
+    "jitter": 0.5
+  }
+}

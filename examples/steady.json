@@ -1,0 +1,7 @@
+{
+  "name": "burst then idle",
+  "description": "Eight requests in 70ms through a 2/s, capacity-8 bucket — token absorbs the burst, leaky meters it out.",
+  "ratePerSec": 2,
+  "capacity": 8,
+  "events": [0, 10, 20, 30, 40, 50, 60, 70]
+}

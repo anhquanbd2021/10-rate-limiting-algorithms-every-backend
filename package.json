@@ -1,0 +1,16 @@
+{
+  "name": "rate-limiter-lab-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Rate Limiter Lab — replay one request stream through fixed/sliding/log windows, token vs leaky buckets, and a concurrency cap, then watch distributed drift and a retry storm.",
+  "scripts": {
+    "start": "node app/server.js",
+    "report": "node scripts/lab-report.mjs",
+    "test": "node --test \"test/*.test.mjs\"",
+    "check": "npm test && npm run report"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

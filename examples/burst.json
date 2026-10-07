@@ -1,0 +1,7 @@
+{
+  "name": "edge-packed burst",
+  "description": "Ten requests packed against a 1s window rollover — five just before, five just after. Limit 5.",
+  "limit": 5,
+  "windowMs": 1000,
+  "events": [950, 960, 970, 980, 990, 1010, 1020, 1030, 1040, 1050]
+}
